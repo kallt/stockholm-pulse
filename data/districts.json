@@ -1,0 +1,86 @@
+{
+  "Södermalm": {
+    "district": "Södermalm",
+    "population": 134200,
+    "area_km2": 8.6,
+    "gyms_count": 6,
+    "tracks_count": 2,
+    "gyms_per_10k": 0.45,
+    "daily_bike_passages": 42100,
+    "bike_density_index": 9.2,
+    "fitness_score": 8.8,
+    "color": "#f97316"
+  },
+  "Kungsholmen": {
+    "district": "Kungsholmen",
+    "population": 72800,
+    "area_km2": 4.9,
+    "gyms_count": 5,
+    "tracks_count": 1,
+    "gyms_per_10k": 0.69,
+    "daily_bike_passages": 27400,
+    "bike_density_index": 8.7,
+    "fitness_score": 9.1,
+    "color": "#06b6d4"
+  },
+  "Vasastan": {
+    "district": "Vasastan",
+    "population": 63500,
+    "area_km2": 3.1,
+    "gyms_count": 4,
+    "tracks_count": 1,
+    "gyms_per_10k": 0.63,
+    "daily_bike_passages": 14700,
+    "bike_density_index": 7.9,
+    "fitness_score": 8.4,
+    "color": "#eab308"
+  },
+  "Östermalm": {
+    "district": "Östermalm",
+    "population": 79400,
+    "area_km2": 18.0,
+    "gyms_count": 4,
+    "tracks_count": 2,
+    "gyms_per_10k": 0.5,
+    "daily_bike_passages": 12100,
+    "bike_density_index": 6.8,
+    "fitness_score": 8.9,
+    "color": "#8b5cf6"
+  },
+  "Norrmalm": {
+    "district": "Norrmalm",
+    "population": 72500,
+    "area_km2": 4.9,
+    "gyms_count": 2,
+    "tracks_count": 0,
+    "gyms_per_10k": 0.28,
+    "daily_bike_passages": 24600,
+    "bike_density_index": 8.4,
+    "fitness_score": 6.5,
+    "color": "#ef4444"
+  },
+  "Djurgården": {
+    "district": "Djurgården",
+    "population": 3400,
+    "area_km2": 4.2,
+    "gyms_count": 2,
+    "tracks_count": 1,
+    "gyms_per_10k": 5.88,
+    "daily_bike_passages": 5600,
+    "bike_density_index": 7.1,
+    "fitness_score": 9.6,
+    "color": "#10b981"
+  },
+  "Hägersten": {
+    "district": "Hägersten",
+    "population": 91000,
+    "area_km2": 12.3,
+    "gyms_count": 2,
+    "tracks_count": 1,
+    "gyms_per_10k": 0.22,
+    "daily_bike_passages": 11600,
+    "bike_density_index": 6.2,
+    "fitness_score": 7.5,
+    "color": "#ec4899"
+  }
+}

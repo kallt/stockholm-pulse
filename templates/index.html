@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stockholm Pulse - Rörelse, Cykelflöden & Utomhusträning</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
+    
+    <!-- Chart.js -->
+    <script src="/static/vendor/chartjs/chart.umd.min.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Top Navigation Bar -->
+    <header class="top-nav">
+        <div class="nav-brand">
+            <div class="brand-icon">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="18.5" cy="17.5" r="3.5"></circle>
+                    <circle cx="5.5" cy="17.5" r="3.5"></circle>
+                    <circle cx="15" cy="5" r="1"></circle>
+                    <path d="M12 17.5V14l-3-3 4-3 2 3h2"></path>
+                </svg>
+            </div>
+            <div>
+                <h1>Stockholm Pulse</h1>
+                <span class="subtext">Rörelseanalys: Cykelflöden, utomhusgym, motionsspår och SMHI-väder</span>
+            </div>
+        </div>
+
+        <!-- Controls and Status Feeds -->
+        <div class="nav-metrics">
+            <div class="status-chip">
+                <span class="live-dot pulse-orange"></span>
+                <span class="chip-label">SMHI Väder:</span>
+                <span class="chip-val" id="smhiStation">Observatoriekullen</span>
+            </div>
+            <div class="status-chip">
+                <span class="live-dot pulse-cyan"></span>
+                <span class="chip-label">Cykelbarometrar:</span>
+                <span class="chip-val" id="bikeStationCount">12 aktiva</span>
+            </div>
+            <div class="status-chip clock-chip">
+                <span class="chip-val mono" id="clockVal">--:--:--</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dashboard Container -->
+    <main class="dashboard-container">
+        
+        <!-- KPI Ribbon -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Cykelflöde i Stockholm</span>
+                    <span class="kpi-badge badge-orange" id="kpiCommuteBadge">Stark pendling</span>
+                </div>
+                <div class="kpi-body">
+                    <div class="kpi-val mono" id="kpiBikeTotal">107 400</div>
+                    <div class="kpi-desc">Uppskattade passager per vardagsdygn</div>
+                </div>
+                <div class="kpi-footer">
+                    <span>Mest trafikerad: <strong id="kpiTopBridge">Skanstullsbron</strong></span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">SMHI Väder & Regn</span>
+                    <span class="kpi-badge badge-blue" id="kpiWeatherBadge">Gynnsamt</span>
+                </div>
+                <div class="kpi-body">
+                    <div class="kpi-val mono" id="kpiTempVal">13.5°C</div>
+                    <div class="kpi-desc" id="kpiRainDesc">0.0 mm nederbörd senaste timmen</div>
+                </div>
+                <div class="kpi-footer">
+                    <span>Vindhastighet: <strong id="kpiWindVal">3.2 m/s</strong> (Bromma)</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Väderkänslighet</span>
+                    <span class="kpi-badge badge-cyan" id="kpiElasticityBadge">Normal nivå</span>
+                </div>
+                <div class="kpi-body">
+                    <div class="kpi-val mono" id="kpiElasticityVal">-7.2 %</div>
+                    <div class="kpi-desc">Tapp i cykeltrafik per mm regn</div>
+                </div>
+                <div class="kpi-footer">
+                    <span>Regnkänsligaste bro: <strong>Strandvägen</strong> (-9.2 %)</span>
+                </div>
+            </div>
+
+            <div class="kpi-card">
+                <div class="kpi-header">
+                    <span class="kpi-title">Gratis Utomhusträning</span>
+                    <span class="kpi-badge badge-emerald">Öppet dygnet runt</span>
+                </div>
+                <div class="kpi-body">
+                    <div class="kpi-val mono" id="kpiGymsVal">25 utegym</div>
+                    <div class="kpi-desc">217 träningsstationer karterade</div>
+                </div>
+                <div class="kpi-footer">
+                    <span>Kvällsbelysning: <strong id="kpiLightedGyms">84 %</strong> har elljus</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Filter Panel -->
+        <section class="filter-panel">
+            <div class="filter-row">
+                <span class="filter-title">Stadsdel:</span>
+                <div class="filter-buttons" id="districtFilters">
+                    <button class="filter-btn active" data-district="all">Hela Stockholm</button>
+                    <button class="filter-btn" data-district="Södermalm">Södermalm</button>
+                    <button class="filter-btn" data-district="Kungsholmen">Kungsholmen</button>
+                    <button class="filter-btn" data-district="Vasastan">Vasastan</button>
+                    <button class="filter-btn" data-district="Östermalm">Östermalm</button>
+                    <button class="filter-btn" data-district="Norrmalm">Norrmalm / City</button>
+                    <button class="filter-btn" data-district="Djurgården">Djurgården</button>
+                    <button class="filter-btn" data-district="Hägersten">Hägersten</button>
+                </div>
+            </div>
+
+            <div class="filter-row layer-filter-row">
+                <span class="filter-title">Kartlager & Filter:</span>
+                <div class="filter-buttons" id="layerToggles">
+                    <button class="filter-btn layer-btn active" data-layer="bikes">Cykelstationer</button>
+                    <button class="filter-btn layer-btn active" data-layer="gyms">Utomhusgym</button>
+                    <button class="filter-btn layer-btn active" data-layer="tracks">Motionsspår</button>
+                </div>
+
+                <div class="filter-checkboxes">
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="chkLightingOnly">
+                        <span>Endast belysta utegym (kvällsträning)</span>
+                    </label>
+                    <label class="checkbox-item">
+                        <input type="checkbox" id="chkAccessibleOnly">
+                        <span>Tillgänglighetsanpassade</span>
+                    </label>
+                </div>
+
+                <div class="active-count-badge">
+                    <span id="activeCountsText">Visar <strong>12</strong> cykelbroar &bull; <strong>25</strong> utegym</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Full-Width Interactive Hero Map -->
+        <section class="card hero-map-card">
+            <div class="card-header">
+                <div class="header-titles">
+                    <h3>Geografisk Rörelsekarta & Utomhusträning</h3>
+                    <span class="subtext">Klicka på orangea cykelstationer för flödesvolymer &bull; Klicka på gröna utegym för redskapslista och belysning &bull; Klicka på lila motionsspår för banprofil</span>
+                </div>
+                <div class="map-legend-pills">
+                    <span class="pill-item"><span class="pill-dot dot-bike"></span> Cykelbarometrar</span>
+                    <span class="pill-item"><span class="pill-dot dot-gym"></span> Utomhusgym</span>
+                    <span class="pill-item"><span class="pill-dot dot-track"></span> Motionsspår</span>
+                    <button class="map-reset-btn" id="btnResetMap">Återställ vy</button>
+                </div>
+            </div>
+            <div class="hero-map-wrapper">
+                <div id="map"></div>
+            </div>
+        </section>
+
+        <!-- Interactive Leaderboard (Topp 10) -->
+        <section class="card leaderboard-card" id="leaderboardSection">
+            <div class="card-header leaderboard-header">
+                <div class="leaderboard-titles">
+                    <div class="leaderboard-title-row">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                        </svg>
+                        <h3>Stockholms Rörelsemästare: Topplista (Leaderboard)</h3>
+                    </div>
+                    <span class="subtext">Stadens mest trafikerade pendlingsstråk och bäst utrustade utegym &bull; Klicka på valfritt objekt för att navigera och belysa på kartan</span>
+                </div>
+
+                <!-- Tabs: Switch between Bike Bridges and Outdoor Gyms -->
+                <div class="leaderboard-tabs" id="leaderboardTabs">
+                    <button class="tab-btn active" data-tab="bikes">
+                        Mest trafikerade cykelbroar
+                    </button>
+                    <button class="tab-btn" data-tab="gyms-rating">
+                        Bäst betyg utegym
+                    </button>
+                    <button class="tab-btn" data-tab="gyms-stations">
+                        Flest träningsstationer
+                    </button>
+                </div>
+            </div>
+
+            <div class="leaderboard-body">
+                <div class="leaderboard-meta-strip">
+                    <span id="leaderboardMetricDesc">Topp 10 cykelpassager i Stockholm rankade efter vardagstrafik.</span>
+                    <span class="hint-text">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 16 16 12 12 8"></polyline>
+                            <line x1="8" y1="12" x2="16" y2="12"></line>
+                        </svg>
+                        Klicka för att zooma in och belysa på kartan
+                    </span>
+                </div>
+                <div class="leaderboard-grid" id="leaderboardGrid">
+                    <!-- Populated dynamically by dashboard.js -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Narrative Insights ("Dagens Rörelse- och Träningsanalys") -->
+        <section class="card insights-card">
+            <div class="card-header">
+                <div>
+                    <div class="insights-title-row">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" stroke-width="2.2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <h3>Dagens Rörelse- och Träningsanalys</h3>
+                    </div>
+                    <span class="subtext">Statistiska samband mellan väderförhållanden, pendlingsmönster och tillgång till gratis träning</span>
+                </div>
+            </div>
+            <div class="insights-feed-grid" id="insightsFeed">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- Analytics Charts Grid -->
+        <section class="charts-master-grid">
+            
+            <!-- Chart 1: 72-Hour Bicycle Commute vs SMHI Rain & Temperature -->
+            <div class="card chart-card-wide">
+                <div class="card-header">
+                    <div>
+                        <h3>72-timmars Historik: Cykeltrafik vs. SMHI Regnmängd & Temperatur</h3>
+                        <span class="subtext" id="weatherCorrelationSubtitle">SMHI Observatoriekullen: Regnkorrelation r = -0.74 (Regnelasticitet: -7.2 %/mm)</span>
+                    </div>
+                </div>
+                <div class="chart-container-lg">
+                    <canvas id="timelineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Split Subgrid: Rush Hour Curve + District Comparison -->
+            <div class="charts-subgrid">
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>Dygnsrytm: Morgon- & Eftermiddagsrusning</h3>
+                            <span class="subtext">Genomsnittligt cykelflöde per timme (00–23) med tydliga pendlingstoppar kl 08 och 17</span>
+                        </div>
+                    </div>
+                    <div class="chart-container-md">
+                        <canvas id="rushHourChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card chart-card">
+                    <div class="card-header">
+                        <div>
+                            <h3>Stadsdelsranking: Utegym per 10 000 Invånare</h3>
+                            <span class="subtext">Tillgång till gratis utomhusträning och cykelinfrastruktur</span>
+                        </div>
+                    </div>
+                    <div class="chart-container-md">
+                        <canvas id="districtBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Detailed Stations Table -->
+        <section class="card station-card">
+            <div class="card-header">
+                <div>
+                    <h3>Sammanställning: Cykelbarometrar & Flaskhalsar</h3>
+                    <span class="subtext">Överblick över Stockholms viktigaste pendlingsbroar och passager</span>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="data-table" id="countersTable">
+                    <thead>
+                        <tr>
+                            <th>Mätstation / Plats</th>
+                            <th>Stadsdel</th>
+                            <th>Vardagsdygn (snitt)</th>
+                            <th>Morgonrusning (07–09)</th>
+                            <th>Eftermiddagsrusning (16–18)</th>
+                            <th>Pendlingsandel</th>
+                            <th>Regnkänslighet</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="countersTableBody">
+                        <!-- Populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Methodology & Theory Guide -->
+        <section class="card methodology-card">
+            <div class="card-header">
+                <div>
+                    <h3>Metodologi & Dataanalysförklaring</h3>
+                    <span class="subtext">Hur rörelseflöden, väderkänslighet och folkhälsoindex beräknas</span>
+                </div>
+            </div>
+            <div class="methodology-grid">
+                <div class="method-box">
+                    <h4>1. Väderelasticitet & Regnpåverkan</h4>
+                    <p>Vi mäter hur stockholmarnas transportval responderar på väderomslag. Elasticitetskoefficienten anger den procentuella minskningen i cykeltrafik per millimeter regn. Data visar att pendlare över Skanstullsbron är betydligt mer väderresistenta än fritidscyklister.</p>
+                </div>
+                <div class="method-box">
+                    <h4>2. Pearsons Korrelationskoefficient (r)</h4>
+                    <p>Sambandet mellan meteorologiska observationer från SMHI (temperatur och nederbörd) och faktiska cykelpassager kvantifieras linjärt. Ett starkt negativt värde påvisar omedelbar dämpningseffekt vid regnskurar.</p>
+                </div>
+                <div class="method-box">
+                    <h4>3. Folkhälso- och Träningsindex</h4>
+                    <p>Stadsdelarna rankas genom en kombination av antal tillgängliga utomhusgym per 10 000 invånare, andel belysta elljusspår för kvällsträning under vinterhalvåret och geografisk närhet till grönområden.</p>
+                </div>
+                <div class="method-box">
+                    <h4>4. Belysningsanalys för Vinterhalvåret</h4>
+                    <p>I Stockholm med begränsat dagsljus under vintermånaderna är belysning en avgörande trygghets- och tillgänglighetsfaktor. Gym med timerstyrd elljusbelysning har upp till tre gånger högre kvällsutnyttjande.</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <span>Stockholm Pulse &bull; Öppna datakällor: Stockholms stad Trafikkontoret, Idrottsförvaltningen & SMHI Meteorologiska observationer.</span>
+        </div>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="/static/vendor/leaflet/leaflet.js"></script>
+    
+    <!-- Application Logic -->
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
