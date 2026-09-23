@@ -84,8 +84,8 @@ function initMap() {
         scrollWheelZoom: true
     });
 
-    // Dark Tile Layer (Esri World Dark Gray Canvas)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    // Light Tile Layer (Esri World Light Gray Canvas)
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
         attribution: '&copy; Esri &mdash; DeLorme, NAVTEQ',
         maxZoom: 17,
         minZoom: 10
@@ -756,17 +756,17 @@ function renderTimelineChart(timeline, analytics) {
                 legend: {
                     position: 'top',
                     labels: {
-                        color: '#94a3b8',
+                        color: '#475569',
                         font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
                         boxWidth: 14,
                         padding: 18
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
                     titleColor: '#ffffff',
                     bodyColor: '#e2e8f0',
-                    borderColor: '#374151',
+                    borderColor: '#cbd5e1',
                     borderWidth: 1,
                     padding: 12,
                     displayColors: true
@@ -774,7 +774,7 @@ function renderTimelineChart(timeline, analytics) {
             },
             scales: {
                 x: {
-                    grid: { color: '#1f2937' },
+                    grid: { color: '#f1f5f9' },
                     ticks: {
                         color: '#64748b',
                         maxTicksLimit: 12,
@@ -787,12 +787,12 @@ function renderTimelineChart(timeline, analytics) {
                     title: {
                         display: true,
                         text: 'Cykeltrafik (passager/h)',
-                        color: '#f97316',
+                        color: '#ea580c',
                         font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
                     },
-                    grid: { color: '#1f2937' },
+                    grid: { color: '#e2e8f0' },
                     ticks: {
-                        color: '#94a3b8',
+                        color: '#475569',
                         font: { family: 'JetBrains Mono', size: 11 }
                     }
                 },
@@ -802,12 +802,12 @@ function renderTimelineChart(timeline, analytics) {
                     title: {
                         display: true,
                         text: 'Nederbörd (mm/h)',
-                        color: '#06b6d4',
+                        color: '#0891b2',
                         font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
                     },
                     grid: { drawOnChartArea: false },
                     ticks: {
-                        color: '#06b6d4',
+                        color: '#0891b2',
                         font: { family: 'JetBrains Mono', size: 11 }
                     },
                     min: 0,
@@ -843,12 +843,12 @@ function renderRushHourChart(profile) {
             datasets: [{
                 label: 'Snittflöde cykelpassager',
                 data: flows,
-                borderColor: '#f97316',
-                backgroundColor: 'rgba(249, 115, 22, 0.2)',
+                borderColor: '#ea580c',
+                backgroundColor: 'rgba(234, 88, 12, 0.14)',
                 fill: true,
                 tension: 0.4,
                 borderWidth: 2.5,
-                pointBackgroundColor: '#f97316',
+                pointBackgroundColor: '#ea580c',
                 pointBorderColor: '#ffffff',
                 pointHoverRadius: 6
             }]
@@ -859,10 +859,10 @@ function renderRushHourChart(profile) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
                     titleColor: '#ffffff',
                     bodyColor: '#e2e8f0',
-                    borderColor: '#374151',
+                    borderColor: '#cbd5e1',
                     borderWidth: 1,
                     callbacks: {
                         label: (ctx) => ` ${ctx.raw.toLocaleString('sv-SE')} passager/h`
@@ -871,7 +871,7 @@ function renderRushHourChart(profile) {
             },
             scales: {
                 x: {
-                    grid: { color: '#1f2937' },
+                    grid: { color: '#f1f5f9' },
                     ticks: {
                         color: '#64748b',
                         maxTicksLimit: 8,
@@ -879,9 +879,9 @@ function renderRushHourChart(profile) {
                     }
                 },
                 y: {
-                    grid: { color: '#1f2937' },
+                    grid: { color: '#e2e8f0' },
                     ticks: {
-                        color: '#94a3b8',
+                        color: '#475569',
                         font: { family: 'JetBrains Mono', size: 11 }
                     }
                 }
@@ -911,16 +911,16 @@ function renderDistrictBarChart(districts) {
                 {
                     label: 'Utegym per 10 000 invånare',
                     data: gymsPer10k,
-                    backgroundColor: 'rgba(16, 185, 129, 0.8)',
-                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(5, 150, 105, 0.85)',
+                    borderColor: '#059669',
                     borderWidth: 1,
                     borderRadius: 4
                 },
                 {
                     label: 'Totalt antal träningsstationer',
                     data: stationCounts,
-                    backgroundColor: 'rgba(59, 130, 246, 0.65)',
-                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(37, 99, 235, 0.75)',
+                    borderColor: '#2563eb',
                     borderWidth: 1,
                     borderRadius: 4
                 }
@@ -933,27 +933,27 @@ function renderDistrictBarChart(districts) {
                 legend: {
                     position: 'top',
                     labels: {
-                        color: '#94a3b8',
+                        color: '#475569',
                         font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
                         boxWidth: 12
                     }
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(17, 24, 39, 0.95)',
-                    borderColor: '#374151',
+                    backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                    borderColor: '#cbd5e1',
                     borderWidth: 1
                 }
             },
             scales: {
                 x: {
-                    grid: { color: '#1f2937' },
+                    grid: { color: '#f1f5f9' },
                     ticks: {
-                        color: '#94a3b8',
-                        font: { family: 'Plus Jakarta Sans', size: 11 }
+                        color: '#334155',
+                        font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
                     }
                 },
                 y: {
-                    grid: { color: '#1f2937' },
+                    grid: { color: '#e2e8f0' },
                     ticks: {
                         color: '#64748b',
                         font: { family: 'JetBrains Mono', size: 11 }
