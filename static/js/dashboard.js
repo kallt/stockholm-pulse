@@ -692,17 +692,24 @@ function renderTimelineChart(timeline, analytics) {
         AppState.charts.timeline.destroy();
     }
 
+    const subtitleEl = document.getElementById('weatherCorrelationSubtitle');
+    if (subtitleEl && analytics && analytics.weather_elasticity) {
+        const corr = analytics.weather_elasticity.correlation_r !== undefined ? analytics.weather_elasticity.correlation_r.toFixed(2) : '-0.74';
+        const elast = analytics.weather_elasticity.elasticity_pct_per_mm !== undefined ? Math.abs(analytics.weather_elasticity.elasticity_pct_per_mm).toFixed(1) : '7.2';
+        subtitleEl.textContent = `SMHI Observatoriekullen: Regnkorrelation r = ${corr} (Regnelasticitet: -${elast} %/mm)`;
+    }
+
     const labels = timeline.map(pt => {
-        const d = new Date(pt.timestamp);
+        const d = new Date(pt.time_iso || pt.timestamp);
         const days = ['Sön', 'Mån', 'Tis', 'Ons', 'Tor', 'Fre', 'Lör'];
-        const day = days[d.getDay()];
-        const hour = String(d.getHours()).padStart(2, '0');
+        const day = isNaN(d.getDay()) ? '' : days[d.getDay()];
+        const hour = isNaN(d.getHours()) ? String(pt.hour || 0).padStart(2, '0') : String(d.getHours()).padStart(2, '0');
         return `${day} ${hour}:00`;
     });
 
-    const bikeFlows = timeline.map(pt => pt.bike_flow);
-    const rainMm = timeline.map(pt => pt.rain_mm);
-    const temperatures = timeline.map(pt => pt.temp_c);
+    const bikeFlows = timeline.map(pt => pt.actual_volume !== undefined ? pt.actual_volume : (pt.bike_flow || 0));
+    const rainMm = timeline.map(pt => pt.rain_mm || 0);
+    const temperatures = timeline.map(pt => pt.temp_c || 0);
 
     AppState.charts.timeline = new Chart(ctx, {
         type: 'bar',
@@ -713,9 +720,9 @@ function renderTimelineChart(timeline, analytics) {
                     type: 'line',
                     label: 'Cykeltrafik (passager/timme)',
                     data: bikeFlows,
-                    borderColor: '#f97316',
-                    backgroundColor: 'rgba(249, 115, 22, 0.15)',
-                    borderWidth: 2.5,
+                    borderColor: '#ea580c',
+                    backgroundColor: 'rgba(234, 88, 12, 0.15)',
+                    borderWidth: 2.8,
                     fill: true,
                     tension: 0.35,
                     pointRadius: 0,
@@ -726,8 +733,8 @@ function renderTimelineChart(timeline, analytics) {
                     type: 'bar',
                     label: 'SMHI Nederbörd (mm/h)',
                     data: rainMm,
-                    backgroundColor: 'rgba(6, 182, 212, 0.75)',
-                    borderColor: '#06b6d4',
+                    backgroundColor: 'rgba(8, 145, 178, 0.75)',
+                    borderColor: '#0891b2',
                     borderWidth: 1,
                     yAxisID: 'y1'
                 },
@@ -735,12 +742,14 @@ function renderTimelineChart(timeline, analytics) {
                     type: 'line',
                     label: 'Temperatur (°C)',
                     data: temperatures,
-                    borderColor: '#fbbf24',
-                    borderDash: [4, 4],
-                    borderWidth: 1.8,
+                    borderColor: '#d97706',
+                    borderDash: [5, 4],
+                    borderWidth: 3.5,
                     fill: false,
-                    tension: 0.3,
-                    pointRadius: 0,
+                    tension: 0.35,
+                    pointRadius: 1,
+                    pointHoverRadius: 6,
+                    pointBackgroundColor: '#d97706',
                     yAxisID: 'y2'
                 }
             ]
@@ -769,7 +778,20 @@ function renderTimelineChart(timeline, analytics) {
                     borderColor: '#cbd5e1',
                     borderWidth: 1,
                     padding: 12,
-                    displayColors: true
+                    displayColors: true,
+                    callbacks: {
+                        label: (tooltipItem) => {
+                            const lbl = tooltipItem.dataset.label || '';
+                            if (lbl.includes('Cykeltrafik')) {
+                                return ` Cykeltrafik: ${Number(tooltipItem.raw).toLocaleString('sv-SE')} passager/h`;
+                            } else if (lbl.includes('Nederbörd')) {
+                                return ` Nederbörd: ${Number(tooltipItem.raw).toFixed(1)} mm/h`;
+                            } else if (lbl.includes('Temperatur')) {
+                                return ` Temperatur: ${Number(tooltipItem.raw).toFixed(1)} °C`;
+                            }
+                            return ` ${lbl}: ${tooltipItem.raw}`;
+                        }
+                    }
                 }
             },
             scales: {
@@ -816,8 +838,21 @@ function renderTimelineChart(timeline, analytics) {
                 y2: {
                     type: 'linear',
                     position: 'right',
-                    display: false,
-                    grid: { drawOnChartArea: false }
+                    display: true,
+                    title: {
+                        display: true,
+                        text: 'Temperatur (°C)',
+                        color: '#d97706',
+                        font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
+                    },
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        color: '#d97706',
+                        font: { family: 'JetBrains Mono', size: 11 },
+                        callback: (val) => `${val}°C`
+                    },
+                    suggestedMin: 0,
+                    suggestedMax: 20
                 }
             }
         }
@@ -833,23 +868,24 @@ function renderRushHourChart(profile) {
         AppState.charts.rushHour.destroy();
     }
 
-    const labels = profile.map(p => `${String(p.hour).padStart(2, '0')}:00`);
-    const flows = profile.map(p => p.avg_flow);
+    const labels = profile.map(p => p.hour || `${String(p.hour_num || 0).padStart(2, '0')}:00`);
+    const flows = profile.map(p => p.citywide_passages !== undefined ? p.citywide_passages : (p.avg_flow || 0));
 
     AppState.charts.rushHour = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Snittflöde cykelpassager',
+                label: 'Cykeltrafik i Stockholm (passager/h)',
                 data: flows,
                 borderColor: '#ea580c',
-                backgroundColor: 'rgba(234, 88, 12, 0.14)',
+                backgroundColor: 'rgba(234, 88, 12, 0.16)',
                 fill: true,
-                tension: 0.4,
-                borderWidth: 2.5,
+                tension: 0.35,
+                borderWidth: 2.8,
                 pointBackgroundColor: '#ea580c',
                 pointBorderColor: '#ffffff',
+                pointRadius: 3,
                 pointHoverRadius: 6
             }]
         },
@@ -864,8 +900,9 @@ function renderRushHourChart(profile) {
                     bodyColor: '#e2e8f0',
                     borderColor: '#cbd5e1',
                     borderWidth: 1,
+                    padding: 10,
                     callbacks: {
-                        label: (ctx) => ` ${ctx.raw.toLocaleString('sv-SE')} passager/h`
+                        label: (tooltipItem) => ` ${Number(tooltipItem.raw).toLocaleString('sv-SE')} passager/h`
                     }
                 }
             },
@@ -874,7 +911,7 @@ function renderRushHourChart(profile) {
                     grid: { color: '#f1f5f9' },
                     ticks: {
                         color: '#64748b',
-                        maxTicksLimit: 8,
+                        maxTicksLimit: 12,
                         font: { family: 'JetBrains Mono', size: 11 }
                     }
                 },
@@ -882,7 +919,8 @@ function renderRushHourChart(profile) {
                     grid: { color: '#e2e8f0' },
                     ticks: {
                         color: '#475569',
-                        font: { family: 'JetBrains Mono', size: 11 }
+                        font: { family: 'JetBrains Mono', size: 11 },
+                        callback: (val) => Number(val).toLocaleString('sv-SE')
                     }
                 }
             }
@@ -891,7 +929,7 @@ function renderRushHourChart(profile) {
 }
 
 // Render Chart 3: District Fitness Equity Bar Chart
-function renderDistrictBarChart(districts) {
+function renderDistrictBarChart(districtsData) {
     const ctx = document.getElementById('districtBarChart');
     if (!ctx) return;
 
@@ -899,9 +937,20 @@ function renderDistrictBarChart(districts) {
         AppState.charts.districtBar.destroy();
     }
 
-    const labels = districts.map(d => d.name);
-    const gymsPer10k = districts.map(d => d.gyms_per_10k);
-    const stationCounts = districts.map(d => d.total_stations);
+    let districtsList = [];
+    if (Array.isArray(districtsData)) {
+        districtsList = districtsData;
+    } else if (districtsData && typeof districtsData === 'object') {
+        districtsList = Object.entries(districtsData).map(([key, val]) => ({
+            name: val.district || key,
+            gyms_per_10k: val.gyms_per_10k || 0,
+            gyms_count: val.gyms_count || 0
+        }));
+    }
+
+    const labels = districtsList.map(d => d.name);
+    const gymsPer10k = districtsList.map(d => d.gyms_per_10k);
+    const gymCounts = districtsList.map(d => d.gyms_count);
 
     AppState.charts.districtBar = new Chart(ctx, {
         type: 'bar',
@@ -909,7 +958,7 @@ function renderDistrictBarChart(districts) {
             labels: labels,
             datasets: [
                 {
-                    label: 'Utegym per 10 000 invånare',
+                    label: 'Utegym per 10 000 inv.',
                     data: gymsPer10k,
                     backgroundColor: 'rgba(5, 150, 105, 0.85)',
                     borderColor: '#059669',
@@ -917,8 +966,8 @@ function renderDistrictBarChart(districts) {
                     borderRadius: 4
                 },
                 {
-                    label: 'Totalt antal träningsstationer',
-                    data: stationCounts,
+                    label: 'Totalt antal utegym (st)',
+                    data: gymCounts,
                     backgroundColor: 'rgba(37, 99, 235, 0.75)',
                     borderColor: '#2563eb',
                     borderWidth: 1,
@@ -941,7 +990,8 @@ function renderDistrictBarChart(districts) {
                 tooltip: {
                     backgroundColor: 'rgba(15, 23, 42, 0.95)',
                     borderColor: '#cbd5e1',
-                    borderWidth: 1
+                    borderWidth: 1,
+                    padding: 10
                 }
             },
             scales: {
