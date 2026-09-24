@@ -26,8 +26,8 @@ Appen hämtar realtidsväder från SMHI (Observatoriekullen och Bromma) och kopp
 
 - Backend: Python 3 med Flask
 - API-integration: SMHI Meteorologiska observationer (öppet API)
-- Frontend: HTML5, CSS3 (modernt mörkt gränssnitt) och vanilla JavaScript
-- Kartmotor: Leaflet med mörka kartlager från Esri Canvas
+- Frontend: HTML5, CSS3 (modernt skandinaviskt gränssnitt med textur och frostat glas) och vanilla JavaScript
+- Kartmotor: Leaflet med stilrena kartlager från Esri Canvas World Light Gray Base
 - Diagram och visualiseringar: Chart.js (lokalt paketerad)
 - Testsvit: Inbyggda enhetstester via Pythons unittest-modul
 
