@@ -2,7 +2,9 @@
 
 En interaktiv webbapplikation och analyspanel som visar hur Stockholm rör på sig. Utforska cykelflöden över stadens viktigaste broar, hitta närmaste utegym och elljusspår, och se hur regn och temperatur från SMHI påverkar stockholmarnas resvanor.
 
-![Förhandsvisning av Stockholm Pulse](docs/dashboard_preview.png)
+![Förhandsvisning av Stockholm Pulse - Ljust läge](docs/dashboard_preview.png)
+
+![Förhandsvisning av Stockholm Pulse - Mörkt läge](docs/dashboard_preview_dark.png)
 
 ## Vad är Stockholm Pulse?
 
@@ -12,6 +14,7 @@ Appen hämtar realtidsväder från SMHI (Observatoriekullen och Bromma) och kopp
 
 ## Huvudfunktioner
 
+- Växla mellan ljust och mörkt läge: Flip-knapp i toppmenyn med sol- och månikon som direkt anpassar hela gränssnittet, kartlagret och graferna, med sparad inställning i webbläsaren.
 - Interaktiv stadskarta: Se alla 12 permanenta cykelmätare, 25 kommunala utegym och populära löprundor i innerstaden och närförort.
 - Topplista (Leaderboard): Utforska de 10 mest trafikerade cykelbroarna, de högst betygsatta utegymmen eller de gym som har flest träningsredskap. Klicka på valfritt objekt för att navigera och belysa det på kartan.
 - Filter per stadsdel och facilitet: Filtrera snabbt fram utegym med kvällsbelysning eller tillgänglighetsanpassning för specifika stadsdelar.
@@ -26,9 +29,9 @@ Appen hämtar realtidsväder från SMHI (Observatoriekullen och Bromma) och kopp
 
 - Backend: Python 3 med Flask
 - API-integration: SMHI Meteorologiska observationer (öppet API)
-- Frontend: HTML5, CSS3 (modernt skandinaviskt gränssnitt med textur och frostat glas) och vanilla JavaScript
-- Kartmotor: Leaflet med stilrena kartlager från Esri Canvas World Light Gray Base
-- Diagram och visualiseringar: Chart.js (lokalt paketerad)
+- Frontend: HTML5, modern CSS3 med dynamiska CSS-variabler för ljust och mörkt läge, frostat glas och vanilla JavaScript
+- Kartmotor: Leaflet med anpassade kartlager från Esri Canvas (Light Gray Base och Dark Gray Base)
+- Diagram och visualiseringar: Chart.js med dynamisk anpassning för ljust och mörkt tema
 - Testsvit: Inbyggda enhetstester via Pythons unittest-modul
 
 ## Snabbstart

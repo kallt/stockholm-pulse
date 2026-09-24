@@ -4,6 +4,7 @@
 
 // Global Application State
 const AppState = {
+    theme: localStorage.getItem('stockholm_pulse_theme') || 'light',
     selectedDistrict: 'all',
     layers: {
         bikes: true,
@@ -24,6 +25,11 @@ const AppState = {
         analytics: null
     },
     map: null,
+    tileLayers: {
+        light: null,
+        dark: null
+    },
+    currentTileLayer: null,
     layerGroups: {
         bikes: null,
         gyms: null,
@@ -49,11 +55,114 @@ const ICONS = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    initTheme();
     initClock();
     initMap();
     initEventHandlers();
     loadDashboardData();
 });
+
+// Theme Management (Light & Dark Mode)
+function initTheme() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const themeParam = urlParams.get('theme');
+    const savedTheme = themeParam || localStorage.getItem('stockholm_pulse_theme') || 'light';
+    AppState.theme = savedTheme;
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.body.setAttribute('data-theme', savedTheme);
+}
+
+function setTheme(theme) {
+    AppState.theme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('stockholm_pulse_theme', theme);
+
+    // Switch map tile layer smoothly
+    if (AppState.map && AppState.tileLayers && AppState.tileLayers[theme]) {
+        if (AppState.currentTileLayer) {
+            AppState.map.removeLayer(AppState.currentTileLayer);
+        }
+        AppState.currentTileLayer = AppState.tileLayers[theme];
+        AppState.currentTileLayer.addTo(AppState.map);
+    }
+
+    // Update charts theme
+    updateChartsTheme(theme);
+}
+
+function toggleTheme() {
+    const nextTheme = AppState.theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+}
+
+function getChartThemeColors() {
+    const isDark = AppState.theme === 'dark';
+    return {
+        isDark,
+        gridColor: isDark ? '#1f2937' : '#f1f5f9',
+        axisBorderColor: isDark ? '#374151' : '#e2e8f0',
+        tickColor: isDark ? '#94a3b8' : '#475569',
+        tickSubtleColor: '#64748b',
+        legendColor: isDark ? '#94a3b8' : '#475569',
+        xTextColor: isDark ? '#f8fafc' : '#334155'
+    };
+}
+
+function updateChartsTheme(theme) {
+    const colors = getChartThemeColors();
+
+    if (AppState.charts.timeline) {
+        const c = AppState.charts.timeline;
+        if (c.options.plugins && c.options.plugins.legend) {
+            c.options.plugins.legend.labels.color = colors.legendColor;
+        }
+        if (c.options.scales) {
+            if (c.options.scales.x) {
+                c.options.scales.x.grid.color = colors.gridColor;
+                c.options.scales.x.ticks.color = colors.tickSubtleColor;
+            }
+            if (c.options.scales.y) {
+                c.options.scales.y.grid.color = colors.axisBorderColor;
+                c.options.scales.y.ticks.color = colors.tickColor;
+            }
+        }
+        c.update();
+    }
+
+    if (AppState.charts.rushHour) {
+        const c = AppState.charts.rushHour;
+        if (c.options.scales) {
+            if (c.options.scales.x) {
+                c.options.scales.x.grid.color = colors.gridColor;
+                c.options.scales.x.ticks.color = colors.tickSubtleColor;
+            }
+            if (c.options.scales.y) {
+                c.options.scales.y.grid.color = colors.axisBorderColor;
+                c.options.scales.y.ticks.color = colors.tickColor;
+            }
+        }
+        c.update();
+    }
+
+    if (AppState.charts.districtBar) {
+        const c = AppState.charts.districtBar;
+        if (c.options.plugins && c.options.plugins.legend) {
+            c.options.plugins.legend.labels.color = colors.legendColor;
+        }
+        if (c.options.scales) {
+            if (c.options.scales.x) {
+                c.options.scales.x.grid.color = colors.gridColor;
+                c.options.scales.x.ticks.color = colors.xTextColor;
+            }
+            if (c.options.scales.y) {
+                c.options.scales.y.grid.color = colors.axisBorderColor;
+                c.options.scales.y.ticks.color = colors.tickSubtleColor;
+            }
+        }
+        c.update();
+    }
+}
 
 // Digital Clock
 function initClock() {
@@ -84,12 +193,22 @@ function initMap() {
         scrollWheelZoom: true
     });
 
-    // Light Tile Layer (Esri World Light Gray Canvas)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+    // Initialize both Light and Dark tile layers
+    AppState.tileLayers.light = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
         attribution: '&copy; Esri &mdash; DeLorme, NAVTEQ',
         maxZoom: 17,
         minZoom: 10
-    }).addTo(AppState.map);
+    });
+
+    AppState.tileLayers.dark = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '&copy; Esri &mdash; DeLorme, NAVTEQ',
+        maxZoom: 17,
+        minZoom: 10
+    });
+
+    // Add current active layer based on theme
+    AppState.currentTileLayer = AppState.tileLayers[AppState.theme] || AppState.tileLayers.light;
+    AppState.currentTileLayer.addTo(AppState.map);
 
     AppState.layerGroups.bikes = L.layerGroup().addTo(AppState.map);
     AppState.layerGroups.gyms = L.layerGroup().addTo(AppState.map);
@@ -162,6 +281,12 @@ function initEventHandlers() {
             renderLeaderboard();
         });
     });
+
+    // Theme Toggle Flip Button
+    const themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) {
+        themeBtn.addEventListener('click', toggleTheme);
+    }
 }
 
 // Core Data Loader
@@ -711,6 +836,8 @@ function renderTimelineChart(timeline, analytics) {
     const rainMm = timeline.map(pt => pt.rain_mm || 0);
     const temperatures = timeline.map(pt => pt.temp_c || 0);
 
+    const colors = getChartThemeColors();
+
     AppState.charts.timeline = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -765,7 +892,7 @@ function renderTimelineChart(timeline, analytics) {
                 legend: {
                     position: 'top',
                     labels: {
-                        color: '#475569',
+                        color: colors.legendColor,
                         font: { family: 'Plus Jakarta Sans', size: 12, weight: '600' },
                         boxWidth: 14,
                         padding: 18
@@ -796,9 +923,9 @@ function renderTimelineChart(timeline, analytics) {
             },
             scales: {
                 x: {
-                    grid: { color: '#f1f5f9' },
+                    grid: { color: colors.gridColor },
                     ticks: {
-                        color: '#64748b',
+                        color: colors.tickSubtleColor,
                         maxTicksLimit: 12,
                         font: { family: 'JetBrains Mono', size: 11 }
                     }
@@ -812,9 +939,9 @@ function renderTimelineChart(timeline, analytics) {
                         color: '#ea580c',
                         font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
                     },
-                    grid: { color: '#e2e8f0' },
+                    grid: { color: colors.axisBorderColor },
                     ticks: {
-                        color: '#475569',
+                        color: colors.tickColor,
                         font: { family: 'JetBrains Mono', size: 11 }
                     }
                 },
@@ -871,6 +998,8 @@ function renderRushHourChart(profile) {
     const labels = profile.map(p => p.hour || `${String(p.hour_num || 0).padStart(2, '0')}:00`);
     const flows = profile.map(p => p.citywide_passages !== undefined ? p.citywide_passages : (p.avg_flow || 0));
 
+    const colors = getChartThemeColors();
+
     AppState.charts.rushHour = new Chart(ctx, {
         type: 'line',
         data: {
@@ -908,17 +1037,17 @@ function renderRushHourChart(profile) {
             },
             scales: {
                 x: {
-                    grid: { color: '#f1f5f9' },
+                    grid: { color: colors.gridColor },
                     ticks: {
-                        color: '#64748b',
+                        color: colors.tickSubtleColor,
                         maxTicksLimit: 12,
                         font: { family: 'JetBrains Mono', size: 11 }
                     }
                 },
                 y: {
-                    grid: { color: '#e2e8f0' },
+                    grid: { color: colors.axisBorderColor },
                     ticks: {
-                        color: '#475569',
+                        color: colors.tickColor,
                         font: { family: 'JetBrains Mono', size: 11 },
                         callback: (val) => Number(val).toLocaleString('sv-SE')
                     }
@@ -952,6 +1081,8 @@ function renderDistrictBarChart(districtsData) {
     const gymsPer10k = districtsList.map(d => d.gyms_per_10k);
     const gymCounts = districtsList.map(d => d.gyms_count);
 
+    const colors = getChartThemeColors();
+
     AppState.charts.districtBar = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -982,7 +1113,7 @@ function renderDistrictBarChart(districtsData) {
                 legend: {
                     position: 'top',
                     labels: {
-                        color: '#475569',
+                        color: colors.legendColor,
                         font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' },
                         boxWidth: 12
                     }
@@ -996,16 +1127,16 @@ function renderDistrictBarChart(districtsData) {
             },
             scales: {
                 x: {
-                    grid: { color: '#f1f5f9' },
+                    grid: { color: colors.gridColor },
                     ticks: {
-                        color: '#334155',
+                        color: colors.xTextColor,
                         font: { family: 'Plus Jakarta Sans', size: 11, weight: '600' }
                     }
                 },
                 y: {
-                    grid: { color: '#e2e8f0' },
+                    grid: { color: colors.axisBorderColor },
                     ticks: {
-                        color: '#64748b',
+                        color: colors.tickSubtleColor,
                         font: { family: 'JetBrains Mono', size: 11 }
                     }
                 }
